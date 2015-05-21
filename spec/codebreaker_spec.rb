@@ -39,38 +39,55 @@ module Codebreaker
 
       end
 
-    # context "#turn" do
-    #   let(:game) { Game.new }
-    #   before do
-    #     allow(game).to receive(:hint){puts "1"}
-    #     allow(game).to receive(:compare)
-    #     allow(game).to receive(:checkTurnsCount)
-    #     allow(game).to receive(:win){exit}
-    #     allow(game).to receive(:finish){exit}
-    #     allow(game).to receive(:gets) {"1234\n"}
-    #     game.start
-    #   end
-    #   it "asks player to guess secret code" do
-    #     expect { game.turn }.to output(/guess/).to_stdout
-    #   end
-    #   it "says how to qut game" do
-    #     expect { game.turn }.to output("If you want to quit game - type 'q'\n").to_stdout
-    #   end
+    context "#turn" do
+      let(:game) { Game.new }
+      before do
+        allow(game).to receive(:hint)
+        allow(game).to receive(:checkTurnsCount)
+        # game.instance_variable_set(:@secret_code, '1253')
+        allow(game).to receive(:gets).and_return('1253')
+        game.start
+      end
+      it "asks player to guess secret code" do
+        expect { game.turn }.to output(/guess/).to_stdout
+      end
+      it "says how to quit game" do
+        expect { game.turn }.to output(/quit/).to_stdout
+      end
 
-    #   it "proposes to use a hint unless it was used already" do
-    #     game.instance_variable_set(:@hintUsed, true)
-    #     expect{ game.turn }.to output(/hint/).to_stdout
-    #   end
+      it "proposes to use a hint unless it was used already" do
+        allow(game).to receive(:gets).and_return('1253')
+        game.instance_variable_set(:@hintUsed, true)
+        expect{ game.turn }.not_to output(/hint/).to_stdout
+      end
 
-    #   it "calls game.hint in case player choses it"
-    #   it "receives player's guess"
-    #   it "checks guess" do
-    #     expec{ game.turn }.to output(/\-/).to_stdout
-    #   end
-    #   it "calls game.win in case of right guess"
-    #   it "shows which numbers were guessed"
-    #   it "calls game.checkTurnsCount unless player has won"
-    # end
+      it "calls game.hint in case player choses it"
+      it "receives player's guess"
+      it "checks guess" do
+        allow(game).to receive(:gets).and_return('1111')
+        expect(game).to receive(:compare)
+        game.turn
+      end
+      it "calls game.win in case of right guess" do
+        game.instance_variable_set(:@secret_code, '1253')
+        # allow(game).to receive(:gets).and_return('1253')
+        expect(game).to receive(:win)
+        game.turn
+      end
+      it "calls game.checkTurnsCount unless player has won"
+    end
+
+    context "#compare" do
+      let(:game) { Game.new }
+      before do
+        game.instance_variable_set(:@secret_code, '1266')
+      end
+
+      it "returns '++' in case of repeting numbers on right and wrong positions" do
+        expect(game.compare('1221')).to eq('++')
+      end
+
+    end
 
     context "#hint" do
       let(:game) { Game.new }
@@ -96,10 +113,11 @@ module Codebreaker
         allow(game).to receive(:turn)
         game.start
       end
-      # it "decides if player can play again in case it didn't exceed the limit turnsCount" do
-      #   game.instance_variable_set(:@turnsCount, 10)
-      #   expect(game).to receive(:over)
-      # end
+      it "decides if player can play again in case it didn't exceed the limit turnsCount" do
+        game.instance_variable_set(:@turnsCount, 10)
+        expect(game).to receive(:over)
+        game.checkTurnsCount
+      end
       it "adds 1 to @turnsCount" do
         expect{game.checkTurnsCount}.to change{game.instance_variable_get(:@turnsCount)}.by(1)
       end

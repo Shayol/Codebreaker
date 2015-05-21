@@ -21,14 +21,14 @@ module Codebreaker
     end
 
     def turn
-      loop do
+      # loop do
         puts "Try to guess secret code that consists of 4 numbers from 1 to 6."
         puts "You can use 1 hint. Put 'h' if you want to uncover one number" unless @hintUsed==true
         puts "If you want to quit game - type 'q'"
         answer = gets.chomp.downcase
-        if (answer.length != CODE_LENGTH || !answer.match(/[1-6]+/)) && answer != "h" && answer != "q"
+        if (answer.length != CODE_LENGTH || !answer.match(/[1-MAX_CODE_NUMBER]+/)) && answer != "h" && answer != "q"
           puts "Check your input. Something is wrong."
-          next
+          turn
         end
         case answer
           when 'h'
@@ -38,21 +38,35 @@ module Codebreaker
           when 'q'
             finish
           else
-            compare(answer)
+            puts compare(answer)
             checkTurnsCount
           end
-      end
+      # end
     end
 
     def compare(answer)
       feedback = ''
-      (0..3).each{|x| feedback << "-" if @secret_code.include? answer[x]}
-      (0..3).each{|x| feedback.prepend("+").slice!(-1) if @secret_code[x] == answer[x]}
-      return puts feedback
+      @copy = @secret_code.clone
+      # puts "#{@secret_code}---#{@copy}"
+      (0..3).each do |x|
+        if @copy[x] == answer[x]
+          feedback.prepend("+")
+          @copy[x]="k"
+
+        elsif @copy.chars.include? answer[x]
+          feedback << "-"
+           position = @copy.index(answer[x])
+           @copy[position] = "k"
+        end
+      end
+      return feedback
     end
 
     def hint
-      return puts "You've used your only hint already." if @hintUsed==true
+      if @hintUsed==true
+        puts "You've used your only hint already."
+        turn
+      end
       @hintUsed=true
       return puts "#{@secret_code.chars[Random.rand(5)]}"
     end
@@ -75,7 +89,7 @@ module Codebreaker
       @turnsCount = @turnsCount + 1
       puts "Guess № #{@turnsCount}"
       over if @turnsCount >= MAX_TURNS_COUNT
-      return
+      turn
     end
 
     def over
