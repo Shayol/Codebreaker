@@ -2,12 +2,13 @@ require 'spec_helper'
 
 module Codebreaker
   describe Codebreaker do
+    let(:game) { Game.new }
+
     it 'has a version number' do
       expect(Codebreaker::VERSION).not_to be nil
     end
-    context "#start" do
-        let(:game) { Game.new }
 
+    context "#start" do
         before do
           expect(game).to receive(:turn)
           game.start
@@ -40,142 +41,163 @@ module Codebreaker
       end
 
     context "#turn" do
-      let(:game) { Game.new }
       before do
-        allow(game).to receive(:hint)
         allow(game).to receive(:checkTurnsCount)
-        # game.instance_variable_set(:@secret_code, '1253')
         allow(game).to receive(:gets).and_return('1253')
         game.start
       end
+
       it "asks player to guess secret code" do
         expect { game.turn }.to output(/guess/).to_stdout
       end
+
       it "says how to quit game" do
         expect { game.turn }.to output(/quit/).to_stdout
       end
 
-      it "proposes to use a hint unless it was used already" do
-        allow(game).to receive(:gets).and_return('1253')
-        game.instance_variable_set(:@hintUsed, true)
-        expect{ game.turn }.not_to output(/hint/).to_stdout
+      it "calls hint in case player choses it" do
+        allow(game).to receive(:gets).and_return('h')
+        expect(game).to receive(:hint)
+        game.turn
       end
 
-      it "calls game.hint in case player choses it"
-      it "receives player's guess"
-      it "checks guess" do
+      it "calls finish in case user enters 'q'" do
+        allow(game).to receive(:gets).and_return('q')
+        expect(game).to receive(:finish)
+        game.turn
+      end
+
+      it "compares user's guess with secret number" do
         allow(game).to receive(:gets).and_return('1111')
         expect(game).to receive(:compare)
         game.turn
       end
-      it "calls game.win in case of right guess" do
+
+      it "calls win in case of right guess" do
         game.instance_variable_set(:@secret_code, '1253')
-        # allow(game).to receive(:gets).and_return('1253')
-        expect(game).to receive(:win)
-        game.turn
+        expect{ game.turn }.to change{game.instance_variable_get(:@won)}.from(false).to(true)
       end
-      it "calls game.checkTurnsCount unless player has won"
     end
 
     context "#compare" do
-      let(:game) { Game.new }
       before do
-        game.instance_variable_set(:@secret_code, '1266')
+        game.instance_variable_set(:@secret_code, '1122')
       end
 
-      it "returns '++' in case of repeting numbers on right and wrong positions" do
-        expect(game.compare('1221')).to eq('++')
+      it "returns '----' in case of all numbers on wrong positions" do
+        expect(game.compare('2211')).to eq('----')
       end
 
+      it "returns '++' in case of same numbers on right and wrong positions" do
+        expect(game.compare('1111')).to eq('++')
+      end
+
+      it "returns '+-' in case of one correctly positioned guess and same number on wrong position" do
+        expect(game.compare('1331')).to eq('+-')
+      end
     end
 
     context "#hint" do
-      let(:game) { Game.new }
+
       before do
         allow(game).to receive(:turn)
         game.start
       end
+
       it "prints message that hint limit was exceeded unless hintUsed=false" do
         game.instance_variable_set(:@hintUsed, true)
-        expect { game.hint }.to output("You've used your only hint already.\n").to_stdout
+        expect { game.hint }.to output(/You've used your only hint already/).to_stdout
       end
+
       it "changes @hintUsed from false to true" do
         expect{game.hint}.to change{game.instance_variable_get(:@hintUsed)}.from(false).to(true)
       end
+
       it "prints one of secret code's numbers" do
+        game = Game.new #let :game invisible for interpolation
+        game.instance_variable_set(:@secret_code, '1111')
         expect { game.hint }.to output(/["#{game.instance_variable_get(:@secret_code)}"]/).to_stdout
       end
     end
 
     context "#checkTurnsCount" do
-      let(:game) { Game.new }
       before do
         allow(game).to receive(:turn)
         game.start
       end
-      it "decides if player can play again in case it didn't exceed the limit turnsCount" do
+
+      it "decides if player lost case he exceed the limit turnsCount" do
         game.instance_variable_set(:@turnsCount, 10)
-        expect(game).to receive(:over)
+        expect(game).to receive(:playAgain)
         game.checkTurnsCount
       end
+
       it "adds 1 to @turnsCount" do
         expect{game.checkTurnsCount}.to change{game.instance_variable_get(:@turnsCount)}.by(1)
       end
     end
 
-    context "#over" do
-      let(:game) { Game.new }
-      before do
-        allow(game).to receive(:turn)
-        allow(game).to receive(:playAgain)
-        game.start
-      end
-      it "prints loser message" do
-        expect { game.over }.to output(/lost/).to_stdout
-      end
-    end
-
-    context "#win" do
-      let(:game) { Game.new }
-      before do
-        allow(game).to receive(:turn)
-        allow(game).to receive(:playAgain)
-        game.start
-      end
-      it "prints four '+'" do
-        expect { game.win }.to output(/won/).to_stdout
-      end
-      it "changes @won from false to true" do
-        expect{ game.win }.to change{game.instance_variable_get(:@won)}.from(false).to(true)
-      end
-    end
-
     context "#playAgain" do
-      let(:game) { Game.new }
-      before do
-        expect(game).to receive(:gets) {"n\n"}
-        allow(game).to receive(:start)
-        allow(game).to receive(:finish)
+
+      it "informs user about winning the game" do
+        game.instance_variable_set(:@won, true)
+        expect { game.playAgain }.to output(/won/).to_stdout
       end
+
       it "asks to play again" do
+        allow(game).to receive(:gets).and_return("n\n")
+        allow(game).to receive(:finish)
         expect { game.playAgain }.to output(/one more game/).to_stdout
+      end
+      it "ends game in case user enters 'n'" do
+        allow(game).to receive(:gets).and_return("n\n")
+        expect(game).to receive(:finish)
+        game.playAgain
+      end
+
+      it "starts new game in case user enters 'y'" do
+        allow(game).to receive(:gets).and_return("y\n")
+        expect(game).to receive(:start)
+        game.playAgain
       end
     end
 
     context "#finish" do
       before do
+        allow(game).to receive(:turn)
+        game.start
+      end
+
+      it "doesn't save player's data if player lost" do
+        expect(game).not_to receive(:save)
         game.finish
       end
-      it "asks to save player's data and quits afterwards"
+
+      it "asks to save player's data if player has won" do
+        game.instance_variable_set(:@won, true)
+        expect(game).to receive(:gets)
+        game.finish
+      end
+
+      it "quits game if player has won and made a choice not to save his data" do
+        game.instance_variable_set(:@won, true)
+        allow(game).to receive(:gets).and_return("\n")
+        expect(game).not_to receive(:save)
+        game.finish
+      end
     end
 
     context "#save" do
-      before do
-        game.save
+
+      it "saves game data" do
+        expect(File).to receive(:open).with(Game::STATISTICS, "a+").once
+        game.save('Name')
       end
-      it "asks player initials"
-      it "saves game data"
-      it "calls game.finish"
+
+      it 'outputs previous statistics in case it exists' do
+        expect(File).to receive(:read).with(Game::STATISTICS).once
+        game.save('Name')
+      end
     end
   end
 end
