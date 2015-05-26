@@ -1,4 +1,4 @@
-require_relative "codebreaker"
+require_relative "lib/codebreaker"
 
 class App
 
@@ -20,7 +20,7 @@ class App
     end.finish
 end
 
-def render(template)
+  def render(template)
     path = File.expand_path("../#{template}", __FILE__)
     ERB.new(File.read(path)).result(binding)
   end
@@ -32,31 +32,34 @@ def render(template)
   def ask(answ)
     return if answ == nil
     answer = answ.chomp.downcase
-    return "Something is wrong with your input" unless @game.valid? answer
-    if @game.won == true
-      @game.finish if answer == ''
-    else
-      @game.finish(answer)
+    if answer == 'new'
+      initialize
+      return "New game started."
+    end
+    return "Type 'new' to start new game." if !@game
+    if @game.won
+      @game.save(answer) unless answer == ''
+      @game=nil
+      return "Type 'new' to play more."
     end
     message = case answer
       when 'h'
-        return "Already used your hint." if @game.hintUsed == true
-        hint = @game.hint
+        @game.hintUsed ? "Already used your hint." : "Hint: #{@game.hint}"
       when 'q'
-        @game.finish
-      when 'n'
-        return "Enter your name to save result or just press enter to quit"
-        @game.finish
-      when 'y'
-        @game = Codebreaker::Game.new
-        @game.start
-        return "New game."
+        @game=nil
+        "Type 'new' to start new game."
       else
+        return "Something is wrong with your input" unless @game.valid? answer
         guess = @game.compare(answer)
         guess.prepend(@game.checkTurnsCount)
-        return guess << "  Exceeded number of attempts. One more game?(y/n)" if @game.turnsCount >= Codebreaker::Game::MAX_TURNS_COUNT
-        return guess << "  You won!!! One more game?(y/n)" if @game.won == true
-        return guess
+        if @game.turnsCount >= Codebreaker::Game::MAX_TURNS_COUNT
+          @game=nil
+          guess << "  Exceeded number of attempts. Enter 'new' for one more game"
+        elsif @game.won
+          guess << "  You won!!! Enter your name to save result or just press enter to quit"
+          guess << "<hr>Results:<hr><p>"#{@game.results}"</p>"
+        end
+        guess
     end
     return message
     end

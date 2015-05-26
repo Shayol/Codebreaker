@@ -5,10 +5,10 @@
   </head>
   <body>
     <div id="container">
-      <h1>Guess 4 numbers in range 1..6. You have one hint. Hint('h'). Quit('q')</h2>
+      <h2>Guess 4 numbers in range 1..6. You have one hint. Hint('h'). Quit('q'). Start new game('new').</h2>
       <form method="post" action="/update_guess">
         <input name="guess" type="text">
-        <input type="submit" value="Say!">
+        <input type="submit" value="Guess!">
       </form>
       <h2><%= guess %></h1>
     </div>
