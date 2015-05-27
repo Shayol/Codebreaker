@@ -95,9 +95,9 @@ module Codebreaker
         expect(game.valid?('1'*(Game::CODE_LENGTH - 1))).to be_falsey
       end
 
-      # it "returns false if player enters numbers different from secret_code range numbers" do
-      #   expect(game.valid?('7'*Game::CODE_LENGTH)).to be_falsey
-      # end
+      it "returns false if player enters numbers different from secret_code range numbers" do
+        expect(game.valid?('7'*Game::CODE_LENGTH)).to be_falsey
+      end
     end
 
     context "#save" do
