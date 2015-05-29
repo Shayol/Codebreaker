@@ -20,7 +20,7 @@ module Codebreaker
     end
 
     def valid? (answer)
-      if answer.length == CODE_LENGTH && answer.match(/^[1-MAX_CODE_NUMBER]{4}$/)
+      if answer.length == CODE_LENGTH && answer.match(/^[1-6]{4}$/)
         true
       else
         false
