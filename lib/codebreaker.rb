@@ -57,7 +57,7 @@ module Codebreaker
 
     def checkTurnsCount
       @turnsCount = @turnsCount + 1
-      "Guess attempt #{@turnsCount}: "
+      "#{@turnsCount}"
     end
 
     def save(name)
