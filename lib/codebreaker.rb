@@ -47,17 +47,13 @@ module Codebreaker
           @copy[position] = "k"
         end
       end
+      @turnsCount = @turnsCount + 1
       return feedback
     end
 
     def hint
       @hintUsed=true
      "#{@secret_code.chars[Random.rand(CODE_LENGTH)]}"
-    end
-
-    def checkTurnsCount
-      @turnsCount = @turnsCount + 1
-      "#{@turnsCount}"
     end
 
     def save(name)
