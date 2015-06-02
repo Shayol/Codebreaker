@@ -1,6 +1,6 @@
 require_relative "codebreaker/version"
 require 'yaml'
-
+#2334
 module Codebreaker
   class Game
 
@@ -33,18 +33,21 @@ module Codebreaker
       return "++++" if @won==true
 
       @copy = @secret_code.clone
+      @guess = answer.clone
       feedback = ''
       (0...CODE_LENGTH).each do |x|
         if @copy[x] == answer[x]
           feedback.prepend("+")
           @copy[x]="k"
+          @guess[x]="z"
         end
       end
       (0...CODE_LENGTH).each do |x|
-       if @copy.chars.include? answer[x]
+       if @copy.chars.include? @guess[x]
           feedback << "-"
-          position = @copy.index(answer[x])
+          position = @copy.index(@guess[x])
           @copy[position] = "k"
+          @guess[x] = "z"
         end
       end
       @turnsCount = @turnsCount + 1
